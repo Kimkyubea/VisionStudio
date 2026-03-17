@@ -1,5 +1,5 @@
-<div align="center">
-  <img src="./assets/logo.png" alt="VisionStudio Logo" width="200">
+<div align="left">
+  <img src="./logo_wo_bg.png" alt="VisionStudio Logo" width="200">
 </div>
 
 **VisionStudio is a modular computer vision experimentation platform designed for efficient model development and evaluation.
