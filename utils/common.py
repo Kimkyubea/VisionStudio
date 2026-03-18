@@ -3,6 +3,8 @@
 import os, sys
 import cv2
 import glob
+import json 
+import yaml
 
 import numpy as np
 
@@ -37,3 +39,22 @@ def create_timestamped_folder(base_dir="."):
     print("[INFO]: Create output directory {}".format(folder_path.absolute()
     ))
     return str(folder_path)
+
+def load_json(json_path):
+    _d = None
+    if not os.path.exists(json_path): return {}
+
+    with open(json_path, 'r', encoding="utf-8") as jf:
+        _d = json.load(jf)
+        if _d is None: _d = {}
+
+    return _d
+
+def load_yaml(yaml_path):
+    _d = None
+    if not os.path.exists(yaml_path): return {}
+
+    with open(yaml_path, 'r', encoding="utf-8") as yf:
+        _d = yaml.load(yf, Loader=yaml.FullLoader)
+        if _d is None: _d = {}
+    return _d
