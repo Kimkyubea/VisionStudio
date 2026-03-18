@@ -17,16 +17,10 @@ def create_trainer(cfg):
     return trainer
 
 def run_train(cfg):
-    print("Start training ...")
-    for k, v in cfg.items():
-        print("{} : {}".format(k, v))
+    print("[INFO]: Start training ...")
 
     trainer = create_trainer(cfg)
-
     trainer.train()
 
-    # TODO #
-    # Logger setup
-
-    print("End training")
+    print("[INFO]: End training")
     
