@@ -1,9 +1,6 @@
 # -*- coding:utf-8 -*-
 
 import os, sys
-import mlflow
-import yaml
-import json 
 
 from core.logger.logger import VSMLflowLogger
 
@@ -16,5 +13,12 @@ def log_evaluation(cfg):
 
     print("[INFO]: End logging")
 
-def log_release_note(cfg): pass
-def upload_model(cfg): pass
+def log_release_note(cfg):
+    logger = VSMLflowLogger(cfg)
+    release_d = cfg.get("release", {})
+    logger.log_release_note(release_d)
+
+def upload_model(cfg):
+    logger = VSMLflowLogger(cfg)
+    model_artifacts = cfg.get("model_artifacts", [])
+    logger.upload_models(model_artifacts)
