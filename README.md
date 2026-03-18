@@ -2,24 +2,125 @@
   <img src="./logo_wo_bg.png" alt="VisionStudio Logo" width="200">
 </div>
 
-**VisionStudio is a modular computer vision experimentation platform designed for efficient model development and evaluation.**
 
-The platform provides a unified interface for training, inference visualization, and performance evaluation of vision models while integrating experiment tracking through MLflow.
+# 📦 VisionStudio
+**VisionStudio is CLI-based platform that provides integrated management of Vision AI model training, evaluation, visualization, deployment(export), and experiment tracking(MLflow).**  
+VisionStudio was designed with various framework extension in mind, starting with Ultralytics(YOLO).
 
-VisionStudio currently supports multiple detection frameworks including Ultralytics YOLO and RF-DETR, and is designed to be easily extensible to additional vision models and tasks.
 
-**Key features include**
+# 🧠 Overview
+VisionStudio = Training + Evaluation + Visualization + Export + Tracking
 
-• Model training with multiple frameworks  
-• Detection result visualization  
-• COCO API based evaluation  
-• MLflow experiment tracking  
-• Modular and extensible architecture
 
-**Planned Features**
+# 🏗️ Architecture
+architecture image ...
 
-• Support for additional models (Detectron2, MMDetection)  
-• Segmentation and pose support  
-• Dataset management tools  
-• Web-based result viewer  
-• Auto-labeling pipeline  
+
+# 🚀 Features  
+• CLI-based integrated workflow  
+• MLflow-based experiment management  
+• ONNX export (fixed batch / multi-batch support)  
+• Framework-independent architecture  
+• Release Note and Model Management Features  
+
+
+# 📁 Project Structure  
+project hierarchy image ...  
+
+
+# ⚙️ Installation  
+Modify the environment name and prefix in the environment.yml file  
+> conda env create --file environment.yml  
+>
+> conda activate "your VS environment"  
+> pip install -r requirements.txt  
+
+
+# 🧠 CLI Usage  
+> python main.py --help  
+
+# 📌 Commands  
+
+| Command      | Description                       |
+| ------------ | --------------------------------- |
+| train        | Train model                       |
+| evaluate     | Evaluate model                    |
+| visualize    | Visualize result                  |
+| export       | Export ONNX                       |
+| log_eval     | Log evaluation result to MLflow   |
+| log_release  | Log model release notes to MLflow |
+| upload_model | Upload model to MLflow            |
+
+
+# 🔥 1. Train  
+> </> Bash  
+> python main.py train train.yaml  
+
+**config.yaml**  
+
+> </> YAML  
+> framework: ultralytics  
+>
+> model: base_models/yolo/yolo11n.pt  
+> dataset: test/data.yaml  
+>
+> epochs: 50  
+> imgsz: 640  
+> batch: 4  
+>
+> project_dir: outputs/project_vision_01   
+> proejct_name: exp01   
+
+**Output**  
+> outputs/train/exp01/  
+>  ├ weights/  
+>  │   ├ best.pt  
+>  │   └ last.pt  
+>  ├ results.png  
+>  ├ args.yaml  
+>  └ other files ...  
+
+
+# 🔥 2. Evaluate  
+> </> Bash  
+> python main.py evaluate eval.yaml  
+
+> </> YAML  
+> image_dir: test/images/val  
+> label_dir: test/labels/val  
+> class_file: test/class_names.txt  
+>
+> framework: ultralytics  
+>   
+> model_path: outputs/project_vision_01/exp01/weights/best.pt  
+> nc: 1  
+> task: detection  
+>
+> img_sz: 640  
+> conf_threshold: 0.001  
+> nms_threshold: 0.6  
+> dst_dir: outputs/project_vision_01/exp01/weights/best.pt  
+> result_name: evaluation_result
+
+**Output**  
+> evaluation_result.txt  
+> evaluation_result.json
+> coco format GT, PREDICT files (.json)  
+
+# 🔥 3. Visualize  
+> </> Bash  
+> python main.py evaluate eval.yaml  
+
+> </> YAML  
+> framework: ultralytics  
+> model_path: outputs/project_vision_01/exp01/weights/best.pt  
+> nc: 1  
+> task: detection  
+> img_sz: 640  
+> conf_threshold: 0.5  
+> nms_threshold: 0.3  
+
+**Output**  
+> Infrence result Display  
+
+Example image ... 
