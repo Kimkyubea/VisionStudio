@@ -3,6 +3,7 @@
 import os, sys
 import mlflow
 
+from datetime import datetime
 from mlflow.tracking import MlflowClient
 
 from utils.common import load_json, load_yaml
@@ -82,3 +83,51 @@ class VSMLflowLogger:
             mlflow.log_dict(args_d, artifact_file="train_configs/train_cfg.json")
 
         print("[DONE] Train config logged to run_id:", self.run_id)
+
+    def log_release_note(self, release_info):
+        def _build_release_md(release_info):
+            date   = release_info.get("date", "")
+            notes  = release_info.get("notes", [])
+            author = release_info.get("author", "FODICS")
+
+            s = ""
+            s += "## Release Note\n\n"
+
+            if date: s += "** Date **\n{}\n\n".format(date)
+            if author: s+= "** Author **\n{}\n\n".format(author)
+
+            s += "** Notes **\n"
+
+            for sen in notes:
+                s += "- {}\n".format(sen)
+
+            s += "\n"
+
+            return s
+
+        with mlflow.start_run(run_id = self.run_id):
+            md_text = _build_release_md(release_info)
+            mlflow.set_tag("released", "true")
+            mlflow.set_tag("release_date", release_info.get("date", ""))
+
+            mlflow.log_text(md_text, artifact_file="release_note/RELEASE.md")
+
+        print("[DONE] Release note artifact added to run_id:", self.run_id)
+
+    def upload_models(self, model_arts):
+        with mlflow.start_run(run_id = self.run_id):
+            for target_model in model_arts:
+                file_name = os.path.basename(target_model)
+                print('[INFO]: Uploading {} ...'.format(file_name))
+
+                mlflow.log_artifact(target_model, artifact_path="model")
+
+            up_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            mlflow.set_tag("model_uploaded_time", up_time)
+
+        print("[DONE] Model artifacts uploaded to run: {}".format(self.run_name))
+
+
+
+
+            
