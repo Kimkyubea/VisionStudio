@@ -40,8 +40,9 @@ pip install -r requirements.txt
 
 # 🧠 CLI Usage  
 ``` diff
-> python main.py --help  
+python main.py --help  
 ```
+
 # 📌 Commands  
 
 | Command      | Description                       |
