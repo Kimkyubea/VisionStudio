@@ -3,7 +3,6 @@
 </div>
 
 
-# 📦 VisionStudio
 **VisionStudio is CLI-based platform that provides integrated management of Vision AI model training, evaluation, visualization, deployment(export), and experiment tracking(MLflow).**  
 VisionStudio was designed with various framework extension in mind, starting with Ultralytics(YOLO).
 
