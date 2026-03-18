@@ -39,8 +39,9 @@ def run_evaluate(cfg):
     img_dir  = cfg.get('image_dir', "")
     lbl_dir  = cfg.get('label_dir', "")
     cls_file = cfg.get('class_file', "")
-    dst_dir  = cfg.get('dst_dir', "./") # Temp
+    dst_dir  = cfg.get('dst_dir', "./")
     model_path = cfg.get('model_path', "")
+    result_name = cfg.get('result_name', "evaluation_result")
 
     if img_dir == "" or lbl_dir == "": raise Exception("[ERROR]: Image or label director path is BLANK")
     if cls_file == "": raise Exception("[ERROR]: Category file path is BLANK")
@@ -52,8 +53,8 @@ def run_evaluate(cfg):
 
     out_gt = os.path.join(dst_dir, './gt_out.json')
     out_dt = os.path.join(dst_dir, './dt_out.json')
-    dst_file = os.path.join(dst_dir, 'e_result.txt')
-    dst_json = os.path.join(dst_dir, 'e_result.json')
+    dst_file = os.path.join(dst_dir, f'{result_name}.txt')
+    dst_json = os.path.join(dst_dir, f'{result_name}.json')
 
     gt_convert_yolo2coco(img_dir, lbl_dir, cats, out_gt)
 
@@ -63,6 +64,7 @@ def run_evaluate(cfg):
     print('[INFO]: Model path = {}'.format(model_path))
     print('[INFO]: Eval DS    = {}'.format(img_dir))
 
+    # TODO 검출에 종속적이므로 wrapper에서는 빼야됨 #
     result_list = []
     for img_id, img_path in tqdm(enumerate(files)):
         _img = imread_unicode(img_path)
