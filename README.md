@@ -30,11 +30,11 @@ project hierarchy image ...
 
 # ⚙️ Installation  
 Modify the environment name and prefix in the environment.yml file  
----
-conda env create --file environment.yml  
 
-conda activate "your VS environment"  
-pip install -r requirements.txt  
+> conda env create --file environment.yml  
+> 
+> conda activate "your VS environment"  
+> pip install -r requirements.txt  
 
 
 # 🧠 CLI Usage  
