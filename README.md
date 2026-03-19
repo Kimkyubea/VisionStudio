@@ -7,7 +7,7 @@ VisionStudio was designed with various framework extension in mind, starting wit
 
 
 # 🧠 Overview
-VisionStudio = Training + Evaluation + Visualization + Export + Tracking
+VisionStudio = Training + Evaluation + Visualization + Export + Tracking  
 
 
 # 🏗️ Architecture
@@ -15,6 +15,7 @@ VisionStudio = Training + Evaluation + Visualization + Export + Tracking
   <img src="./docs/VS_architecture_v0.png" alt="VisionStudio Architecture" width="750">
 </div>
 
+VisionStudio follows a config-driven, CLI-based architecture where each command dynamically  
 
 # 🚀 Features  
 • CLI-based integrated workflow  
@@ -24,9 +25,18 @@ VisionStudio = Training + Evaluation + Visualization + Export + Tracking
 • Release Note and Model Management Features  
 
 
-# 📁 Project Structure  
-project hierarchy image ...  
+# 📁 Directory Structure  
+<div align="left">
+  <img src="./docs/directory_structure.png" alt="VisionStudio Directory Structure" width="750">
+</div>
 
+``` diff
+• core    : Training, Inference, Evaluation, Export, Logging core modules  
+• vs_cli  : CLI command entry points  
+• utils   : Common utility functions  
+• docs    : Documentation and architecture design  
+• env     : Environment setup files  
+```
 
 # ⚙️ Installation  
 Modify the environment name and prefix in the environment.yml file  
