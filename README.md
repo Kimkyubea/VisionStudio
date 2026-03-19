@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./logo_wo_bg.png" alt="VisionStudio Logo" width="200">
+  <img src="./docs/logo_wo_bg.png" alt="VisionStudio Logo" width="300">
 </div>
 
 **VisionStudio is CLI-based platform that provides integrated management of Vision AI model training, evaluation, visualization, deployment(export), and experiment tracking(MLflow).**  
@@ -11,7 +11,9 @@ VisionStudio = Training + Evaluation + Visualization + Export + Tracking
 
 
 # 🏗️ Architecture
-architecture image ...
+<div align="left">
+  <img src="./docs/VS_architecture_v0.png" alt="VisionStudio Architecture" width="750">
+</div>
 
 
 # 🚀 Features  
