@@ -156,7 +156,9 @@ nms_threshold: 0.3
 Infrence result Display  
 ```
 
-Example image ...  
+<div align="left">
+  <img src="./docs/VS_Visualize_ex.png" alt="VisionStudio Visualization example" width="750">
+</div>
 
 # 🔥 4. Export (ONNX)  
 ``` diff
