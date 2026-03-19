@@ -1,4 +1,4 @@
-<div align="left">
+<div align="center">
   <img src="./logo_wo_bg.png" alt="VisionStudio Logo" width="200">
 </div>
 
@@ -91,7 +91,10 @@ outputs/train/exp01/
 ``` diff
 </> Bash  
 python main.py evaluate eval.yaml  
+```
 
+**config.yaml**  
+``` diff
 </> YAML  
 image_dir: test/images/val  
 label_dir: test/labels/val  
@@ -119,9 +122,13 @@ in evaluation work directory
 ```
 
 # 🔥 3. Visualize  
+``` diff
 </> Bash  
 python main.py evaluate eval.yaml  
+```
 
+**config.yaml**
+```diff
 </> YAML  
 framework: ultralytics  
 model_path: outputs/project_vision_01/exp01/weights/best.pt  
@@ -130,8 +137,136 @@ task: detection
 img_sz: 640  
 conf_threshold: 0.5  
 nms_threshold: 0.3  
+```
 
 **Output**  
+``` diff
 Infrence result Display  
+```
 
-Example image ... 
+Example image ...  
+
+# 🔥 4. Export (ONNX)  
+``` diff
+</> Bash
+python main.py export export.yaml
+```
+**config.yaml**  
+``` diff
+framework: ultralytics  
+model_path: outputs/project_vision_01/exp01/weights/best.pt  
+
+img_sz:640  
+batch: [1, 4, 8, 16, ...]  
+opset: 12  
+
+export_dir: outputs/project_vision_01/exp01/weights  
+```
+**Output**  
+```diff
+model_bsz{batch_size}.onnx  
+ -> model_bsz1.onnx   
+ -> model_bsz16.onnx
+ ->  ...
+```
+
+# 🔥 5. MLflow Logging  
+``` diff
+</> Bash
+python main.py log_eval logging.yaml
+```
+
+**Features**  
+• Automatic recording of evaluation results  
+• Dataset-based run management  
+
+**Output**  
+```diff
+Evaluation result metrics in MLflow UI
+```
+
+# 🔥 6. Release Note  
+``` diff
+</> Bash
+python main.py log_release logging.yaml
+```
+
+**Output**  
+``` diff
+artifacts/release_note/RELEASE.md
+```
+
+# 🔥 7. Model Upload  
+``` diff
+</> Bash
+python main.py upload_model logging.yaml
+```
+
+**config.yaml**  
+``` diff
+tracking_uri: http://{mlflow_server_ip}:{mlflow_server_port}  
+
+experiment_name: {Your experiment name}  
+run_name: {Your run name}  
+eval_ds_key: {Your evaluation datset key}  
+work_dir: outputs/project_vision_01/exp01  
+result_name: {Your evaluation result file name without extension}  
+cfg_file_name: {Your train configuration file name}  
+cfg_file_ext: {Your train configuration file extension}  
+
+release:  
+  date: {model released date}  
+  notes:  
+    - Note Sentence 1  
+    - Note Sentence 2  
+    - Note Sentence N    
+
+  author: FODICS  
+
+model_artifacts:  
+  - outputs/project_vision_01/exp01/weights/best.pt  
+  - outputs/project_vision_01/exp01/weights/model_bsz1.onnx  
+  - outputs/project_vision_01/exp01/weights/model_bsz16.onnx  
+```
+
+# 🧪 MLflow Structure  
+``` diff
+Experiment
+ └ Run
+     ├ attributes
+     ├ metrics
+     ├ artifacts/
+     │    ├ train_config
+     │    ├ model
+     │    └ release_note/
+     └ tags
+```
+
+# ⚡ Pipeline Automation
+``` diff
+1. run_train.bat  
+2. run_eval.bat  
+3. run_log_eval.bat  
+4. run_log_release-note.bat  
+5. run_upload_models.bat  
+
+6. run_all.bat        # train, evaluation, log-eval  
+7. run_train_eval.bat # train, evaluation  
+8. run_eval_log.bat   # evaluation, log-eval
+```
+
+# 🧩 Extensibility  
+VisionStudio considers the following framework extensions:  
+• Ultralytics (YOLO) ✅  
+• RF-DETR (Planned)  
+• Detectron2 (Planned)  
+• MMDetection (Planned)  
+
+# 📌 Design Philosophy  
+``` diff
+The frameworks are different,  
+but ther results are managed identically.
+```
+
+# 🙌 Conclusion  
+VisionStudio aims to be an integrated expreiment management platform for Vision AI model development.
