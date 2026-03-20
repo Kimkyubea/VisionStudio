@@ -86,6 +86,11 @@ batch: 4
 
 project_dir: outputs/project_vision_01   
 proejct_name: exp01   
+yolo_args:  
+  lr0: 0.0001  
+  momentum: 0.937  
+  hsv_h: 0.015  
+  hsv_s: 0.7  
 ```
 
 **Output**  
