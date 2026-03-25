@@ -1,6 +1,8 @@
 # -*- coding:utf-8 -*-
 
 import os
+import yaml
+
 from ultralytics import YOLO, settings
 settings.update({"mlflow": False})
 
@@ -47,6 +49,10 @@ class RFDETRTrainer():
         num_class  = config.get('nc', None)
 
         self.model = self.build_model(model_size, model_path=model_path, num_class=num_class)
+
+    def _save_yaml(self, path, data):
+        with open(path, "w", encoding="utf-8") as f:
+            yaml.dump( data, f, allow_unicode=True, sort_keys=False, default_flow_style=False)
 
     def build_model(self, model_size, model_path=None, num_class=None):
         size = model_size.strip().lower()
@@ -112,5 +118,9 @@ class RFDETRTrainer():
 
         for k, v in train_args.items():
             print("%s: %s" % (k, str(v)))
+
+        config_obj = self.model.get_train_config(**train_args).model_dump()
+        save_args_path = os.path.join(prj_pull, "args.yaml")
+        self._save_yaml(save_args_path, config_obj)
 
         self.model.train(**train_args)
