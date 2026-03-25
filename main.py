@@ -90,6 +90,8 @@ def main(args):
         from vs_cli.log_mlflow import upload_model
         upload_model(cfg)
 
+    elif args.command == "log_model": pass
+
 
 if __name__ == "__main__":
     args = get_parser().parse_args()
