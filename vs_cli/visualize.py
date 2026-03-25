@@ -41,5 +41,5 @@ def run_visualize(cfg):
         boxes = predictor.predict(_img)
         vis = visualizer.draw(_img, boxes)
 
-        cv2.imshow('test', vis)
+        cv2.imshow('VS Visualization', vis)
         if cv2.waitKey(0) & 0xFF == ord('q'): break
