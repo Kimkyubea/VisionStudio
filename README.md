@@ -39,9 +39,9 @@ VisionStudio follows a config-driven, CLI-based architecture where each command 
 ```
 
 # ⚙️ Installation  
+``` diff
 Modify the environment name and prefix in the environment.yml file  
 
-``` diff
 conda env create --file environment.yml  
 conda activate "your VS environment"
 
