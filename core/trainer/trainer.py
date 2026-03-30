@@ -124,3 +124,14 @@ class RFDETRTrainer():
         self._save_yaml(save_args_path, config_obj)
 
         self.model.train(**train_args)
+
+class CoDETRTrainer:
+    def __init__(self, config, logger=None):
+        self.config = config
+        self.logger = logger
+
+    def train(self):
+        print("[INFO] Co-DETR training is not implemented yet")
+        print("[INFO] Placeholder for future MMDetection integration")
+
+        return
