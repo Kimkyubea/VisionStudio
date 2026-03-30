@@ -43,12 +43,14 @@ def gt_convert_yolo2coco(img_dir, lbl_dir, class_names, out_json):
 
         h,w,_ = _img.shape
 
+        current_img_id = img_id
         coco["images"].append({
-            "id": img_id,
+            "id": current_img_id,
             "file_name": image_name,
             "width": w,
             "height": h
         })
+        img_id += 1
 
         if not os.path.exists(label_path): 
             print("[WARN]: Don't exists {}, skipped.".format(label_path))
@@ -72,15 +74,13 @@ def gt_convert_yolo2coco(img_dir, lbl_dir, class_names, out_json):
 
             coco["annotations"].append({
                 "id"         : ant_id,
-                "image_id"   : img_id,
+                "image_id"   : current_img_id,
                 "category_id": cls,
                 "bbox"       : [x, y, box_w, box_h],
                 "area"       : box_a,
                 "iscrowd"    : 0
             })
             ant_id += 1
-
-        img_id += 1
 
     with open(out_json, 'w') as jf:
         json.dump(coco, jf, indent='\t')
