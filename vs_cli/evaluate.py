@@ -19,7 +19,7 @@ def create_prdictor(cfg):
 
     elif frw == "rfdetr": 
         from core.predictor.predictor import RFDETRPredictor
-        trainer = RFDETRPredictor(cfg)
+        predictor = RFDETRPredictor(cfg)
         print("[INFO]: Create vision predictor RFDETR")
 
     return predictor
@@ -36,11 +36,11 @@ def run_evaluate(cfg):
     predictor = create_prdictor(cfg)
     evaluator = create_evaluator(cfg)
 
-    img_dir  = cfg.get('image_dir', "")
-    lbl_dir  = cfg.get('label_dir', "")
-    cls_file = cfg.get('class_file', "")
-    dst_dir  = cfg.get('dst_dir', "./")
+    img_dir    = cfg.get('image_dir', "")
+    lbl_dir    = cfg.get('label_dir', "")
+    cls_file   = cfg.get('class_file', "")
     model_path = cfg.get('model_path', "")
+    dst_dir    = cfg.get('dst_dir', os.path.dirname(model_path))
     result_name = cfg.get('result_name', "evaluation_result")
 
     if img_dir == "" or lbl_dir == "": raise Exception("[ERROR]: Image or label director path is BLANK")
