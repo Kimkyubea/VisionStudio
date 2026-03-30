@@ -12,6 +12,11 @@ def create_trainer(cfg):
         trainer = RFDETRTrainer(cfg)
         print("[INFO]: Create vision trainer RFDETR")
 
+    elif frw == "codetr":
+        from core.trainer.trainer import CoDETRTrainer
+        trainer = CoDETRTrainer(cfg)
+        print("[INFO]: Create vision trainer CoDETR")
+        
     else: raise Exception("[ERROR]: Unsupported framework : {}".format(frw))
 
     return trainer
