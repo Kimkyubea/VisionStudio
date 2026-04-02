@@ -64,6 +64,7 @@ python main.py --help
 | log_eval     | Log evaluation result to MLflow   |
 | log_release  | Log model release notes to MLflow |
 | upload_model | Upload model to MLflow            |
+| log_model    | Log a model description to MLflow |
 
 
 # 🔥 1. Train  
