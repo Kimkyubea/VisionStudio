@@ -2,9 +2,14 @@
 
 import os, sys
 import mlflow
+import onnx
+import numpy as np
 
 from datetime import datetime
+from onnx import TensorProto
+from mlflow.models import ModelSignature
 from mlflow.tracking import MlflowClient
+from mlflow.types.schema import Schema, TensorSpec
 
 from utils.common import load_json, load_yaml
 
@@ -127,7 +132,145 @@ class VSMLflowLogger:
 
         print("[DONE] Model artifacts uploaded to run: {}".format(self.run_name))
 
+    def log_model_artifact(self, model_path, artifact_path="model"):
+        if model_path == "":
+            raise Exception("[ERROR]: Model path is BLANK")
+        if not os.path.exists(model_path):
+            raise Exception("[ERROR]: Model path does not exist: {}".format(model_path))
+        if artifact_path == "":
+            raise Exception("[ERROR]: Artifact path is BLANK")
 
+        with mlflow.start_run(run_id=self.run_id):
+            if os.path.isdir(model_path):
+                print("[INFO]: Logging model directory {} -> {}".format(model_path, artifact_path))
+                mlflow.log_artifacts(model_path, artifact_path=artifact_path)
+            else:
+                print("[INFO]: Logging model file {} -> {}".format(model_path, artifact_path))
+                mlflow.log_artifact(model_path, artifact_path=artifact_path)
 
+            log_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            mlflow.set_tag("logged_model", "true")
+            mlflow.set_tag("logged_model_source", model_path)
+            mlflow.set_tag("logged_model_artifact_path", artifact_path)
+            mlflow.set_tag("logged_model_time", log_time)
 
-            
+        print("[DONE] Model artifact logged to run: {}".format(self.run_name))
+
+    def register_onnx_models(self, model_entries):
+        if model_entries is None or len(model_entries) == 0:
+            raise Exception("[ERROR]: registered_models is EMPTY")
+
+        with mlflow.start_run(run_id=self.run_id):
+            for idx, model_entry in enumerate(model_entries):
+                if not isinstance(model_entry, dict):
+                    raise Exception("[ERROR]: registered_models[{}] must be dict".format(idx))
+
+                model_path = model_entry.get("model_path", "")
+                registered_model_name = model_entry.get("registered_model_name", "")
+                alias = model_entry.get("alias", "")
+                description = model_entry.get("description", "")
+                await_registration_for = model_entry.get("await_registration_for", 300)
+                model_tags = model_entry.get("tags", {})
+
+                if model_path == "":
+                    raise Exception("[ERROR]: model_path is BLANK in registered_models[{}]".format(idx))
+                if not os.path.exists(model_path):
+                    raise Exception("[ERROR]: Model path does not exist: {}".format(model_path))
+                if not model_path.lower().endswith(".onnx"):
+                    raise Exception("[ERROR]: Only ONNX model registration is supported: {}".format(model_path))
+                if registered_model_name == "":
+                    raise Exception("[ERROR]: registered_model_name is BLANK in registered_models[{}]".format(idx))
+
+                print("[INFO]: Registering ONNX model {} -> {}".format(model_path, registered_model_name))
+                onnx_model = onnx.load(model_path)
+                model_signature = self._build_onnx_signature(onnx_model)
+                model_info = mlflow.onnx.log_model(
+                    onnx_model=onnx_model,
+                    # artifact_path=artifact_path,
+                    registered_model_name=registered_model_name,
+                    signature=model_signature,
+                    await_registration_for=await_registration_for,
+                    tags=model_tags,
+                )
+
+                latest_version = self._find_latest_model_version(registered_model_name)
+                if latest_version is None:
+                    print("[WARN]: Registered model version lookup failed for {}".format(registered_model_name))
+                    continue
+
+                version = latest_version.version
+
+                if description:
+                    self.mlclient.update_model_version(
+                        name=registered_model_name,
+                        version=version,
+                        description=description
+                    )
+
+                if alias:
+                    self.mlclient.set_registered_model_alias(
+                        name=registered_model_name,
+                        alias=alias,
+                        version=version
+                    )
+
+                self.mlclient.set_model_version_tag(
+                    name=registered_model_name,
+                    version=version,
+                    key="source_run_name",
+                    value=self.run_name
+                )
+
+                print("[DONE] Registered model {} version {}".format(registered_model_name, version))
+                if model_info is not None and getattr(model_info, "model_uri", None):
+                    print("[INFO]: Model URI = {}".format(model_info.model_uri))
+
+    def _find_latest_model_version(self, registered_model_name):
+        versions = self.mlclient.search_model_versions(
+            filter_string="name = '{}'".format(registered_model_name),
+            order_by=["version_number DESC"],
+            max_results=1
+        )
+
+        if versions is None or len(versions) == 0:
+            return None
+
+        return versions[0]
+
+    def _build_onnx_signature(self, onnx_model):
+        input_specs = self._build_tensor_specs(onnx_model.graph.input)
+        output_specs = self._build_tensor_specs(onnx_model.graph.output)
+        return ModelSignature(inputs=Schema(input_specs), outputs=Schema(output_specs))
+
+    def _build_tensor_specs(self, value_infos):
+        tensor_specs = []
+        for value_info in value_infos:
+            tensor_type = value_info.type.tensor_type
+            np_dtype = self._onnx_elem_type_to_numpy_dtype(tensor_type.elem_type)
+            shape = []
+            for dim in tensor_type.shape.dim:
+                if dim.HasField("dim_value"):
+                    shape.append(int(dim.dim_value))
+                else:
+                    shape.append(-1)
+            tensor_specs.append(TensorSpec(np_dtype, tuple(shape), value_info.name))
+        return tensor_specs
+
+    def _onnx_elem_type_to_numpy_dtype(self, elem_type):
+        type_map = {
+            TensorProto.FLOAT: np.dtype(np.float32),
+            TensorProto.UINT8: np.dtype(np.uint8),
+            TensorProto.INT8: np.dtype(np.int8),
+            TensorProto.UINT16: np.dtype(np.uint16),
+            TensorProto.INT16: np.dtype(np.int16),
+            TensorProto.INT32: np.dtype(np.int32),
+            TensorProto.INT64: np.dtype(np.int64),
+            TensorProto.BOOL: np.dtype(np.bool_),
+            TensorProto.FLOAT16: np.dtype(np.float16),
+            TensorProto.DOUBLE: np.dtype(np.float64),
+            TensorProto.UINT32: np.dtype(np.uint32),
+            TensorProto.UINT64: np.dtype(np.uint64),
+        }
+        if elem_type not in type_map:
+            raise Exception("[ERROR]: Unsupported ONNX tensor elem_type: {}".format(elem_type))
+        return type_map[elem_type]
