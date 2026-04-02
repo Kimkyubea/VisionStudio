@@ -48,6 +48,10 @@ def get_parser():
     parser_upload = subparsers.add_parser("upload_model", help="Upload model to MLflow")
     parser_upload.add_argument("config", help="Path to config file")
 
+    # -------------------------------
+    # log_model
+    parser_log_model = subparsers.add_parser("log_model", help="Log a model artifact to MLflow")
+    parser_log_model.add_argument("config", help="Path to config file")
     return parser
 
 
@@ -90,7 +94,9 @@ def main(args):
         from vs_cli.log_mlflow import upload_model
         upload_model(cfg)
 
-    elif args.command == "log_model": pass
+    elif args.command == "log_model":
+        from vs_cli.log_mlflow import log_model
+        log_model(cfg)
 
 
 if __name__ == "__main__":

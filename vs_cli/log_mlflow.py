@@ -22,3 +22,8 @@ def upload_model(cfg):
     logger = VSMLflowLogger(cfg)
     model_artifacts = cfg.get("model_artifacts", [])
     logger.upload_models(model_artifacts)
+
+def log_model(cfg):
+    logger = VSMLflowLogger(cfg)
+    registered_models = cfg.get("registered_models", [])
+    logger.register_onnx_models(registered_models)
