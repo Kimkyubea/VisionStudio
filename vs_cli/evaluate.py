@@ -3,6 +3,7 @@
 import os, sys
 sys.path.append('core/evaluator/cocoapi/PythonAPI')
 import json
+import yaml
 import numpy as np
 
 from tqdm import tqdm
@@ -46,6 +47,10 @@ def run_evaluate(cfg):
     if img_dir == "" or lbl_dir == "": raise Exception("[ERROR]: Image or label director path is BLANK")
     if cls_file == "": raise Exception("[ERROR]: Category file path is BLANK")
     if model_path == "": raise Exception("[ERROR]: Vision Model path is BLANK")
+
+    _cfg_bak = os.path.join(dst_dir, 'input_config.yaml')
+    with open(_cfg_bak, 'w') as yf:
+        yaml.dump(cfg, yf, indent=4, default_flow_style=False, sort_keys=False)
 
     with open(cls_file, 'r') as cf:
         lines = cf.read().splitlines()
