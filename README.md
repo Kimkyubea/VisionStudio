@@ -1,292 +1,323 @@
+# VisionStudio
+
 <div align="center">
   <img src="./docs/logo_wo_bg.png" alt="VisionStudio Logo" width="300">
 </div>
 
-**VisionStudio is CLI-based platform that provides integrated management of Vision AI model training, evaluation, visualization, deployment(export), and experiment tracking(MLflow).**  
-VisionStudio was designed with various framework extension in mind, starting with Ultralytics(YOLO).
+VisionStudio is a CLI-based platform for Vision AI workflows. It provides a unified interface for training, evaluation, visualization, export, and experiment tracking across multiple model backends.
 
+## Overview
 
-# 🧠 Overview
-VisionStudio = Training + Evaluation + Visualization + Export + Tracking  
+VisionStudio is designed around a config-driven CLI:
 
+```text
+VisionStudio = Training + Evaluation + Visualization + Export + Tracking
+```
 
-# 🏗️ Architecture
+Currently supported integrations include:
+- Ultralytics detection
+- Ultralytics classification
+- RF-DETR detection
+- Custom multi-head classification
+
+## Architecture
+
 <div align="left">
   <img src="./docs/VS_architecture_v0.png" alt="VisionStudio Architecture" width="750">
 </div>
 
-VisionStudio follows a config-driven, CLI-based architecture where each command dynamically  
+VisionStudio keeps CLI entrypoints and framework-specific implementations separated.
 
-# 🚀 Features  
-• CLI-based integrated workflow  
-• MLflow-based experiment management  
-• ONNX export (fixed batch / multi-batch support)  
-• Framework-independent architecture  
-• Release Note and Model Management Features  
+- `main.py`: top-level CLI
+- `vs_cli/`: command entrypoints such as `train`, `visualize`, `evaluate`
+- `core/`: trainer, predictor, visualizer, exporter, logging modules
+- `custom_trainer/`: custom model packages and trainer implementations
+- `utils/`: common helpers
 
+## Directory Structure
 
-# 📁 Directory Structure  
 <div align="left">
   <img src="./docs/directory_structure.png" alt="VisionStudio Directory Structure" width="750">
 </div>
 
-``` diff
-• core    : Training, Inference, Evaluation, Export, Logging core modules  
-• vs_cli  : CLI command entry points  
-• utils   : Common utility functions  
-• docs    : Documentation and architecture design  
-• env     : Environment setup files  
+```text
+core/            Core training, inference, evaluation, export, and logging modules
+vs_cli/          CLI command entry points
+custom_trainer/  Custom model packages and trainers
+utils/           Common utilities
+docs/            Documentation and architecture assets
+env/             Environment setup files
 ```
 
-# ⚙️ Installation  
-``` diff
-Modify the environment name and prefix in the environment.yml file  
+## Installation
 
-conda env create --file environment.yml  
-conda activate "your VS environment"
-
-pip install -r requirements.txt  
+```powershell
+conda env create --file environment.yml
+conda activate <your_env_name>
+pip install -r requirements.txt
 ```
 
-# 🧠 CLI Usage  
-``` diff
-python main.py --help  
+## CLI Usage
+
+```powershell
+python main.py --help
 ```
 
-# 📌 Commands  
+## Commands
 
-| Command      | Description                       |
-| ------------ | --------------------------------- |
-| train        | Train model                       |
-| evaluate     | Evaluate model                    |
-| visualize    | Visualize result                  |
-| export       | Export ONNX                       |
-| log_eval     | Log evaluation result to MLflow   |
-| log_release  | Log model release notes to MLflow |
-| upload_model | Upload model to MLflow            |
-| log_model    | Log a model description to MLflow |
+| Command | Description |
+| --- | --- |
+| `train` | Train a model |
+| `evaluate` | Evaluate a model |
+| `visualize` | Visualize prediction results |
+| `export` | Export a model |
+| `log_eval` | Log evaluation results to MLflow |
+| `log_release` | Log release notes to MLflow |
+| `upload_model` | Upload model artifacts to MLflow |
+| `log_model` | Log model metadata to MLflow |
 
+## Train
 
-# 🔥 1. Train  
-``` diff
-</> Bash  
-python main.py train train.yaml  
+```powershell
+python main.py train train.yaml
 ```
 
-**config.yaml**  
-``` diff
-</> YAML  
-framework: ultralytics  
+Example Ultralytics detection config:
 
-model: base_models/yolo/yolo11n.pt  
-dataset: test/data.yaml  
+```yaml
+framework: ultralytics
+task: detection
 
-epochs: 50  
-imgsz: 640  
-batch: 4  
+model: base_models/yolo/yolo11n.pt
+dataset: test/data.yaml
 
-project_dir: outputs/project_vision_01   
-proejct_name: exp01   
-yolo_args:  
-  lr0: 0.0001  
-  momentum: 0.937  
-  hsv_h: 0.015  
-  hsv_s: 0.7  
+epochs: 50
+imgsz: 640
+batch: 4
+
+project_dir: outputs/project_vision_01
+project_name: exp01
+
+yolo_args:
+  lr0: 0.0001
+  momentum: 0.937
+  hsv_h: 0.015
+  hsv_s: 0.7
 ```
 
-**Output**  
-``` diff
-outputs/train/exp01/  
- ├ weights/  
- │   ├ best.pt  
- │   └ last.pt  
- ├ results.png  
- ├ args.yaml  
- └ other files ...  
+## Visualize
+
+```powershell
+python main.py visualize visualize.yaml
 ```
 
-# 🔥 2. Evaluate  
-``` diff
-</> Bash  
-python main.py evaluate eval.yaml  
+Example detection config:
+
+```yaml
+framework: ultralytics
+task: detection
+
+model_path: outputs/project_vision_01/exp01/weights/best.pt
+src_path: test/images/val
+
+nc: 1
+img_sz: 640
+conf_threshold: 0.5
+nms_threshold: 0.3
 ```
 
-**config.yaml**  
-``` diff
-</> YAML  
-image_dir: test/images/val  
-label_dir: test/labels/val  
-class_file: test/class_names.txt  
+Example custom multi-head classification config:
 
-framework: ultralytics  
-  
-model_path: outputs/project_vision_01/exp01/weights/best.pt  
-nc: 1  
-task: detection  
+```yaml
+framework: custom_multihead
+task: classification
 
-img_sz: 640  
-conf_threshold: 0.001  
-nms_threshold: 0.6  
-dst_dir: outputs/project_vision_01/exp01/weights/best.pt  
+model_path: outputs/multihead/exp01/best.pth
+src_path: D:/dataset/valid/images
+
+device: 0
+shuffle: false
+
+threshold: 0.6
+thresholds:
+  kind: 0.6
+  color: 0.5
+
+font_scale: 0.7
+font_thickness: 2
+line_height: 30
+text_origin: [10, 30]
+```
+
+Notes:
+- the command is `visualize`
+- for custom multi-head classification, the predictor loads the model once during initialization
+- `predict()` receives an image directly
+
+## Evaluate
+
+```powershell
+python main.py evaluate eval.yaml
+```
+
+Example config:
+
+```yaml
+framework: ultralytics
+task: detection
+
+image_dir: test/images/val
+label_dir: test/labels/val
+class_file: test/class_names.txt
+
+model_path: outputs/project_vision_01/exp01/weights/best.pt
+nc: 1
+
+img_sz: 640
+conf_threshold: 0.001
+nms_threshold: 0.6
+dst_dir: outputs/project_vision_01/exp01/eval
 result_name: evaluation_result
 ```
 
-**Output**  
-```diff
-evaluation_result.txt  
-evaluation_result.json
-coco format GT, PREDICT files (.json)  
-in evaluation work directory  
-```
+## Export
 
-# 🔥 3. Visualize  
-``` diff
-</> Bash  
-python main.py evaluate eval.yaml  
-```
-
-**config.yaml**
-```diff
-</> YAML  
-framework: ultralytics  
-model_path: outputs/project_vision_01/exp01/weights/best.pt  
-nc: 1  
-task: detection  
-img_sz: 640  
-conf_threshold: 0.5  
-nms_threshold: 0.3  
-```
-
-**Output**  
-``` diff
-Infrence result Display  
-```
-
-<div align="left">
-  <img src="./docs/VS_Visualize_ex.png" alt="VisionStudio Visualization example" width="750">
-</div>
-
-# 🔥 4. Export (ONNX)  
-``` diff
-</> Bash
+```powershell
 python main.py export export.yaml
 ```
-**config.yaml**  
-``` diff
-framework: ultralytics  
-model_path: outputs/project_vision_01/exp01/weights/best.pt  
 
-img_sz:640  
-batch: [1, 4, 8, 16, ...]  
-opset: 12  
+Example config:
 
-export_dir: outputs/project_vision_01/exp01/weights  
-```
-**Output**  
-```diff
-model_bsz{batch_size}.onnx  
- -> model_bsz1.onnx   
- -> model_bsz16.onnx
- ->  ...
+```yaml
+framework: ultralytics
+model_path: outputs/project_vision_01/exp01/weights/best.pt
+
+img_sz: 640
+batch: [1, 4, 8, 16]
+opset: 12
+
+export_dir: outputs/project_vision_01/exp01/weights
 ```
 
-# 🔥 5. MLflow Logging  
-``` diff
-</> Bash
+## MLflow Logging
+
+VisionStudio supports experiment tracking and model artifact management through MLflow.
+
+```powershell
 python main.py log_eval logging.yaml
-```
-
-**Features**  
-• Automatic recording of evaluation results  
-• Dataset-based run management  
-
-**Output**  
-```diff
-Evaluation result metrics in MLflow UI
-```
-
-# 🔥 6. Release Note  
-``` diff
-</> Bash
 python main.py log_release logging.yaml
-```
-
-**Output**  
-``` diff
-artifacts/release_note/RELEASE.md
-```
-
-# 🔥 7. Model Upload  
-``` diff
-</> Bash
 python main.py upload_model logging.yaml
+python main.py log_model logging.yaml
 ```
 
-**config.yaml**  
-``` diff
-tracking_uri: http://{mlflow_server_ip}:{mlflow_server_port}  
+## Custom Multi-Head Classification
 
-experiment_name: {Your experiment name}  
-run_name: {Your run name}  
-eval_ds_key: {Your evaluation datset key}  
-work_dir: outputs/project_vision_01/exp01  
-result_name: {Your evaluation result file name without extension}  
-cfg_file_name: {Your train configuration file name}  
-cfg_file_ext: {Your train configuration file extension}  
+VisionStudio now supports a custom multi-head classification workflow through the `custom_multihead` framework key.
 
-release:  
-  date: {model released date}  
-  notes:  
-    - Note Sentence 1  
-    - Note Sentence 2  
-    - Note Sentence N    
+Training config example:
 
-  author: FODICS  
+```yaml
+framework: custom_multihead
+task: classification
 
-model_artifacts:  
-  - outputs/project_vision_01/exp01/weights/best.pt  
-  - outputs/project_vision_01/exp01/weights/model_bsz1.onnx  
-  - outputs/project_vision_01/exp01/weights/model_bsz16.onnx  
+dataset: D:/dataset/data.yaml
+
+epochs: 30
+imgsz: 224
+batch: 16
+val_batch: 16
+workers: 2
+device: 0
+
+backbone_name: convnext_tiny
+pretrained: true
+lr: 0.0001
+weight_decay: 0.0001
+
+project_dir: outputs/multihead
+project_name: exp01
+
+heads:
+  - name: kind
+    num_classes: 14
+    class_names:
+      - passenger_car
+      - truck
+      - taxi
+      - bus
+      - suv
+      - van
+      - fire_engine
+      - police_car
+      - ambulance
+      - motorcycle
+      - bicycle
+      - kick_scooter
+      - wheelchair
+      - forklift
+
+  - name: color
+    num_classes: 10
+    class_names:
+      - yellow
+      - orange
+      - green
+      - gray
+      - red
+      - blue
+      - white
+      - golden
+      - brown
+      - black
+
+thresholds:
+  kind: 0.6
+  color: 0.5
 ```
 
-# 🧪 MLflow Structure  
-``` diff
-Experiment
- └ Run
-     ├ attributes
-     ├ metrics
-     ├ artifacts/
-     │    ├ train_config
-     │    ├ model
-     │    └ release_note/
-     └ tags
+Dataset yaml example:
+
+```yaml
+train: D:/dataset/train/images
+val: D:/dataset/valid/images
 ```
 
-# ⚡ Pipeline Automation
-``` diff
-1. run_train.bat  
-2. run_eval.bat  
-3. run_log_eval.bat  
-4. run_log_release-note.bat  
-5. run_upload_models.bat  
+Label format:
 
-6. run_all.bat        # train, evaluation, log-eval  
-7. run_train_eval.bat # train, evaluation  
-8. run_eval_log.bat   # evaluation, log-eval
+```text
+train/images/image1.jpg
+train/labels/image1.txt
 ```
 
-# 🧩 Extensibility  
-VisionStudio considers the following framework extensions:  
-• Ultralytics (YOLO) ✅  
-• RF-DETR (Planned)  
-• Detectron2 (Planned)  
-• MMDetection (Planned)  
+`image1.txt`
 
-# 📌 Design Philosophy  
-``` diff
-The frameworks are different,  
-but ther results are managed identically.
+```text
+0 4
 ```
 
-# 🙌 Conclusion  
-VisionStudio aims to be an integrated expreiment management platform for Vision AI model development.
+Each token is a class index and the token order must match the `heads` order.
+
+Outputs:
+- `best.pth`
+- `last.pth`
+- `args.yaml`
+
+Detailed package usage is documented in [custom_trainer/multihead_classification/README.md](/C:/Users/User/Desktop/workspace/MLOps/VisionStudio/custom_trainer/multihead_classification/README.md).
+
+## Extensibility
+
+VisionStudio is designed so that framework-specific logic stays behind thin adapters.
+
+This makes it easier to add:
+- new trainers
+- new predictors
+- new visualization flows
+- custom model packages under `custom_trainer/`
+
+## Design Philosophy
+
+Different frameworks may have different APIs, but their workflows should be managed consistently.
+
+## Conclusion
+
+VisionStudio aims to be an integrated experiment management platform for Vision AI model development, while remaining open to custom extensions such as multi-head classification.
