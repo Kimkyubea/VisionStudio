@@ -1,8 +1,9 @@
 # -*- coding:utf-8 -*-
 
 import os, sys
-import mlflow
 import onnx
+import glob
+import mlflow
 import numpy as np
 
 from datetime import datetime
@@ -23,6 +24,7 @@ class VSMLflowLogger:
         self.eval_ds_key = self.config.get("eval_ds_key", "")
         self.work_dir = self.config.get("work_dir", ".")
         self.eval_file = os.path.join(self.work_dir, f'{self.config.get("result_name", "evaluation_result")}.json')
+        self.sample_dir = os.path.join(self.work_dir, self.config.get("sample_dir", "eval_samples"))
         self.train_cfg_file = os.path.join(
             self.work_dir, 
             f'{self.config.get("cfg_file_name", "args")}.{self.config.get("cfg_file_ext", "yaml")}'
@@ -80,6 +82,18 @@ class VSMLflowLogger:
                 mlflow.log_metric(k, float(v))
 
         print("[DONE] Eval metrics logged to run_id:", self.run_id)
+        if os.path.exists(self.sample_dir): self.upload_inf_results()
+
+    def upload_inf_results(self):
+        smp_files = sorted(glob.glob('{}/*'.format(self.sample_dir)))
+        with mlflow.start_run(run_id = self.run_id):
+            for smp_file in smp_files:
+                file_name = os.path.basename(smp_file)
+                print('[INFO]: Uploading inference result sample image {}'.format(file_name))
+
+                mlflow.log_artifact(smp_file, artifact_path="samples")
+
+        print('[DONE]: Inference sample files uploaded to run: {}'.format(self.run_name))
 
     def log_train_cfg(self):
         args_d = load_yaml(self.train_cfg_file)
@@ -132,30 +146,6 @@ class VSMLflowLogger:
 
         print("[DONE] Model artifacts uploaded to run: {}".format(self.run_name))
 
-    def log_model_artifact(self, model_path, artifact_path="model"):
-        if model_path == "":
-            raise Exception("[ERROR]: Model path is BLANK")
-        if not os.path.exists(model_path):
-            raise Exception("[ERROR]: Model path does not exist: {}".format(model_path))
-        if artifact_path == "":
-            raise Exception("[ERROR]: Artifact path is BLANK")
-
-        with mlflow.start_run(run_id=self.run_id):
-            if os.path.isdir(model_path):
-                print("[INFO]: Logging model directory {} -> {}".format(model_path, artifact_path))
-                mlflow.log_artifacts(model_path, artifact_path=artifact_path)
-            else:
-                print("[INFO]: Logging model file {} -> {}".format(model_path, artifact_path))
-                mlflow.log_artifact(model_path, artifact_path=artifact_path)
-
-            log_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            mlflow.set_tag("logged_model", "true")
-            mlflow.set_tag("logged_model_source", model_path)
-            mlflow.set_tag("logged_model_artifact_path", artifact_path)
-            mlflow.set_tag("logged_model_time", log_time)
-
-        print("[DONE] Model artifact logged to run: {}".format(self.run_name))
-
     def register_onnx_models(self, model_entries):
         if model_entries is None or len(model_entries) == 0:
             raise Exception("[ERROR]: registered_models is EMPTY")
@@ -171,6 +161,7 @@ class VSMLflowLogger:
                 description = model_entry.get("description", "")
                 await_registration_for = model_entry.get("await_registration_for", 300)
                 model_tags = model_entry.get("tags", {})
+                arti_path = model_entry.get("arti_path", "")
 
                 if model_path == "":
                     raise Exception("[ERROR]: model_path is BLANK in registered_models[{}]".format(idx))
@@ -191,20 +182,23 @@ class VSMLflowLogger:
                     signature=model_signature,
                     await_registration_for=await_registration_for,
                     tags=model_tags,
+                    name=arti_path
                 )
 
                 latest_version = self._find_latest_model_version(registered_model_name)
                 if latest_version is None:
                     print("[WARN]: Registered model version lookup failed for {}".format(registered_model_name))
                     continue
-
+ 
                 version = latest_version.version
-
-                if description:
+                shortcut_tags = self._build_model_version_shortcuts(latest_version)
+ 
+                version_description = self._build_model_version_description(description, shortcut_tags)
+                if version_description:
                     self.mlclient.update_model_version(
                         name=registered_model_name,
                         version=version,
-                        description=description
+                        description=version_description
                     )
 
                 if alias:
@@ -217,13 +211,72 @@ class VSMLflowLogger:
                 self.mlclient.set_model_version_tag(
                     name=registered_model_name,
                     version=version,
-                    key="source_run_name",
+                    key="experiment_name",
+                    value=self.exp_name
+                )
+
+                self.mlclient.set_model_version_tag(
+                    name=registered_model_name,
+                    version=version,
+                    key="run_name",
                     value=self.run_name
                 )
 
+                for tag_key, tag_value in shortcut_tags.items():
+                    self.mlclient.set_model_version_tag(
+                        name=registered_model_name,
+                        version=version,
+                        key=tag_key,
+                        value=tag_value
+                    )
+ 
                 print("[DONE] Registered model {} version {}".format(registered_model_name, version))
                 if model_info is not None and getattr(model_info, "model_uri", None):
                     print("[INFO]: Model URI = {}".format(model_info.model_uri))
+
+    def _build_model_version_shortcuts(self, model_version):
+        run_id = getattr(model_version, "run_id", "") or self.run_id
+        source = getattr(model_version, "source", "") or ""
+        base_url = self.trk_uri.rstrip("/")
+
+        shortcuts = {}
+
+        if self.exp_name:
+            shortcuts["experiment_name"] = self.exp_name
+        if self.run_name:
+            shortcuts["run_name"] = self.run_name
+
+        if base_url.startswith("http://") or base_url.startswith("https://"):
+            shortcuts["experiment_url"] = "{}/#/experiments/{}".format(base_url, self.exp_id)
+            shortcuts["run_url"] = "{}/#/experiments/{}/runs/{}".format(base_url, self.exp_id, run_id)
+
+        if source:
+            shortcuts["model_uri"] = source
+
+        return shortcuts
+
+    def _build_model_version_description(self, description, shortcut_tags):
+        lines = []
+        if description:
+            lines.append(description.strip())
+
+        shortcut_keys = [
+            ("Experiment", "experiment_url"),
+            ("Run", "run_url"),
+        ]
+        shortcut_lines = []
+        for label, key in shortcut_keys:
+            value = shortcut_tags.get(key, "")
+            if value:
+                shortcut_lines.append("- {}: {}".format(label, value))
+
+        if shortcut_lines:
+            if lines:
+                lines.append("")
+            lines.append("### Shortcuts")
+            lines.extend(shortcut_lines)
+
+        return "\n".join(lines).strip()
 
     def _find_latest_model_version(self, registered_model_name):
         versions = self.mlclient.search_model_versions(

@@ -9,7 +9,8 @@ def log_evaluation(cfg):
 
     logger = VSMLflowLogger(cfg)
     logger.log_eval_result()
-    logger.log_train_cfg()
+    log_cfg_option = cfg.get('log_config', False)
+    if log_cfg_option: logger.log_train_cfg()
 
     print("[INFO]: End logging")
 
