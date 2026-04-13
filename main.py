@@ -45,12 +45,12 @@ def get_parser():
 
     # -------------------------------
     # upload_model
-    parser_upload = subparsers.add_parser("upload_model", help="Upload model to MLflow")
+    parser_upload = subparsers.add_parser("upload_model", help="Upload model to MLflow artifact")
     parser_upload.add_argument("config", help="Path to config file")
 
     # -------------------------------
     # log_model
-    parser_log_model = subparsers.add_parser("log_model", help="Log a model artifact to MLflow")
+    parser_log_model = subparsers.add_parser("log_model", help="Log a model to MLflow")
     parser_log_model.add_argument("config", help="Path to config file")
     return parser
 
