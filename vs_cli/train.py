@@ -12,10 +12,15 @@ def _load_rfdetr_detection_trainer():
     from core.trainer.trainer import RFDETRTrainer
     return RFDETRTrainer
 
+def _load_multihead_classification_trainer():
+    from core.trainer.trainer import MultiHeadClassificationTrainer
+    return MultiHeadClassificationTrainer
+
 TRAINER_REGISTRY = {
     ("ultralytics", "detection"): _load_ultralytics_detection_trainer,
     ("ultralytics", "classification"): _load_ultralytics_classification_trainer,
     ("rfdetr", "detection"): _load_rfdetr_detection_trainer,
+    ("custom_multihead", "classification"): _load_multihead_classification_trainer,
 }
 
 def create_trainer(cfg):
