@@ -170,3 +170,23 @@ class CoDETRTrainer:
         print("[INFO] Placeholder for future MMDetection integration")
 
         return
+
+
+#################################################
+##############  Customized trainer ##############
+#################################################
+
+class MultiHeadClassificationTrainer:
+    def __init__ (self, config, logger=None):
+        self.config = config
+        self.logger = logger
+
+    def train(self):
+        from custom_trainer.multihead_classification.trainer import train
+
+        result = train(self.config)
+
+        print("[INFO]: Custom multi-head classification training DONE")
+        print("[INFO]: save_dir  = {}".format(result['save_dir']))
+        print("[INFO]: best_path = {}".format(result['bast_path']))
+        print("[INFO]: last_path = {}".format(result['last_path']))
