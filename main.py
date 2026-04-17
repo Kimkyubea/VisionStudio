@@ -1,104 +1,68 @@
 # -*- coding:utf-8 -*-
 
 import os, sys
-import argparse
 
-from utils.configuration_manager import load_config
+from utils.configuration_manager import VisionConfigManager
+from utils.dataset_linker import build_dataset_tasks, link_dataset_tasks, bulk_unlink, write_link_manifest
+from utils.interactive import select_command, select_config
 
-def get_parser():
-
-    parser = argparse.ArgumentParser(
-        description="VisionStudio CLI"
-    )
-
-    subparsers = parser.add_subparsers(dest="command", help="Available commands")
-
-    # -------------------------------
-    # train
-    parser_train = subparsers.add_parser("train", help="Train model")
-    parser_train.add_argument("config", help="Path to config file")
-
-    # -------------------------------
-    # visualize
-    parser_vis = subparsers.add_parser("visualize", help="Visualize results")
-    parser_vis.add_argument("config", help="Path to config file")
-
-    # -------------------------------
-    # evaluate
-    parser_eval = subparsers.add_parser("evaluate", help="Evaluate model")
-    parser_eval.add_argument("config", help="Path to config file")
-
-    # -------------------------------
-    # export
-    parser_export = subparsers.add_parser("export", help="Export model")
-    parser_export.add_argument("config", help="Path to config file")
-
-    # -------------------------------
-    # log_eval
-    parser_log_eval = subparsers.add_parser("log_eval", help="Log evaluation to MLflow")
-    parser_log_eval.add_argument("config", help="Path to config file")
-
-    # -------------------------------
-    # log_release
-    parser_log_rel = subparsers.add_parser("log_release", help="Log release note to MLflow")
-    parser_log_rel.add_argument("config", help="Path to config file")
-
-    # -------------------------------
-    # upload_model
-    parser_upload = subparsers.add_parser("upload_model", help="Upload model to MLflow artifact")
-    parser_upload.add_argument("config", help="Path to config file")
-
-    # -------------------------------
-    # log_model
-    parser_log_model = subparsers.add_parser("log_model", help="Log a model to MLflow")
-    parser_log_model.add_argument("config", help="Path to config file")
-    return parser
-
-
-def main(args):
-
-    if args.command is None:
-        print("[ERROR]: Please input command")
-        return
-
-    print("[INFO]: Loading configurations from {} ... ".format(args.config))
-    cfg = load_config(args.config)
+def main(cmd, config_path):
+    print("[INFO]: Loading configurations from {} ... ".format(config_path))
+    cfg_manager = VisionConfigManager.from_file(config_path)
     print("[INFO]: Configuration loading DONE")
 
-    # -------------------------------
-    if args.command == "train":
+    cfg = cfg_manager.get_runtime_config()
+
+    if cmd == "train":
         from vs_cli.train import run_train
+
+        dataset_tasks = build_dataset_tasks(cfg_manager.cfg, cfg_manager.data_cfg)
+        link_dataset_tasks(dataset_tasks)
+        write_link_manifest(cfg_manager.cfg, dataset_tasks)
+
+        cfg = cfg_manager.build_hooked_train_config()
+        cfg_manager.dump_runtime_config(cfg)
+
         run_train(cfg)
 
-    elif args.command == "visualize":
+        bulk_unlink(cfg_manager.dataset_dir)
+
+    elif cmd == "visualize":
         from vs_cli.visualize import run_visualize
         run_visualize(cfg)
 
-    elif args.command == "evaluate":
+    elif cmd == "evaluate":
         from vs_cli.evaluate import run_evaluate
         run_evaluate(cfg)
 
-    elif args.command == "export":
+    elif cmd == "export":
         from vs_cli.export import run_export
         run_export(cfg)
 
-    elif args.command == "log_eval":
+    elif cmd == "log_eval":
         from vs_cli.log_mlflow import log_evaluation
         log_evaluation(cfg)
 
-    elif args.command == "log_release":
+    elif cmd == "log_release":
         from vs_cli.log_mlflow import log_release_note
         log_release_note(cfg)
 
-    elif args.command == "upload_model":
+    elif cmd == "upload_model":
         from vs_cli.log_mlflow import upload_model
         upload_model(cfg)
 
-    elif args.command == "log_model":
+    elif cmd == "log_model":
         from vs_cli.log_mlflow import log_model
         log_model(cfg)
 
-
 if __name__ == "__main__":
-    args = get_parser().parse_args()
-    main(args)
+    if len(sys.argv) >= 3:
+        cmd = sys.argv[1]
+        config_path = sys.argv[2]
+
+    else:
+        print("[INFO] Enter Interactive Mode")
+        cmd = select_command()
+        config_path = select_config()
+
+    main(cmd, config_path)
