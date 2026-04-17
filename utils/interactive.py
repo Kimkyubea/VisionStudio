@@ -33,7 +33,7 @@ def select_config(config_dir="configs"):
         print("[ERROR] No config files found")
         return ""
 
-    cfg = inquirer.select(
+    cfg = inquirer.fuzzy(
         message="Select Config File",
         choices=files
     ).execute()
