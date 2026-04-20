@@ -3,6 +3,8 @@
 import os
 from InquirerPy import inquirer
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 def select_command():
     cmd = inquirer.select(
         message="Select Command",
