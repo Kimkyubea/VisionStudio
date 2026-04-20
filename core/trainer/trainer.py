@@ -1,7 +1,9 @@
 # -*- coding:utf-8 -*-
 
 import os
+import cv2
 import yaml
+import numpy as np
 
 from ultralytics import YOLO, settings
 settings.update({"mlflow": False})
@@ -158,7 +160,20 @@ class RFDETRTrainer():
         save_args_path = os.path.join(prj_pull, "args.yaml")
         self._save_yaml(save_args_path, config_obj)
 
-        self.model.train(**train_args)
+        _original_imread = cv2.imread
+
+        def _safe_imread(path, flags=cv2.IMREAD_COLOR):
+            try:
+                data = np.fromfile(path, dtype=np.uint8)
+                if data.size == 0: return None
+                return cv2.imdecode(data, flags)
+            except Exception: return None
+
+        cv2.imread = _safe_imread
+
+        try:
+            self.model.train(**train_args)
+        finally: cv2.imread = _original_imread
 
 class CoDETRTrainer:
     def __init__(self, config, logger=None):
@@ -189,4 +204,20 @@ class MultiHeadClassificationTrainer:
         print("[INFO]: Custom multi-head classification training DONE")
         print("[INFO]: save_dir  = {}".format(result['save_dir']))
         print("[INFO]: best_path = {}".format(result['bast_path']))
+        print("[INFO]: last_path = {}".format(result['last_path']))
+
+
+class MultiHeadDetectionTrainer:
+    def __init__ (self, config, logger=None):
+        self.config = config
+        self.logger = logger
+
+    def train(self):
+        from custom_trainer.multihead_detection.trainer import train
+
+        result = train(self.config)
+
+        print("[INFO]: Custom multi-head detection training DONE")
+        print("[INFO]: save_dir  = {}".format(result['save_dir']))
+        print("[INFO]: best_path = {}".format(result['best_path']))
         print("[INFO]: last_path = {}".format(result['last_path']))
