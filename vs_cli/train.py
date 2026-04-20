@@ -16,11 +16,16 @@ def _load_multihead_classification_trainer():
     from core.trainer.trainer import MultiHeadClassificationTrainer
     return MultiHeadClassificationTrainer
 
+def _load_multihead_detection_trainer():
+    from core.trainer.trainer import MultiHeadDetectionTrainer
+    return MultiHeadDetectionTrainer
+
 TRAINER_REGISTRY = {
     ("ultralytics", "detection"): _load_ultralytics_detection_trainer,
     ("ultralytics", "classification"): _load_ultralytics_classification_trainer,
     ("rfdetr", "detection"): _load_rfdetr_detection_trainer,
     ("custom_multihead", "classification"): _load_multihead_classification_trainer,
+    ("custom_multihead", "detection"): _load_multihead_detection_trainer,
 }
 
 def create_trainer(cfg):
@@ -36,10 +41,10 @@ def create_trainer(cfg):
     
 
 def run_train(cfg):
-    print("[INFO]: Start training ...")
+    print("\n[INFO]: Start training ...\n")
 
     trainer = create_trainer(cfg)
     trainer.train()
 
-    print("[INFO]: End training")
+    print("\n[INFO]: End training\n")
     
