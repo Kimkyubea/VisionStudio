@@ -47,11 +47,11 @@ class VisionConfigManager:
 
     @property
     def work_dir(self):
-        return os.path.join(self.project_dir, self.project_name)
+        return os.path.abspath(os.path.join(self.project_dir, self.project_name))
 
     @property
     def dataset_dir(self):
-        return os.path.join(self.work_dir, "dataset")
+        return os.path.abspath(os.path.join(self.work_dir, "dataset"))
 
     def get_runtime_config(self):
         return copy.deepcopy(self.cfg)
@@ -63,20 +63,20 @@ class VisionConfigManager:
         hooked_data_cfg["train"] = os.path.join("train", "images")
         hooked_data_cfg["val"] = os.path.join("valid", "images")
 
-        hooked_data_config_file = os.path.join(self.dataset_dir, "data.yaml")
+        hooked_data_config_file = os.path.abspath(os.path.join(self.dataset_dir, "data.yaml"))
         self.dump_config(hooked_data_config_file, hooked_data_cfg)
 
         if hooked_cfg["framework"] in ["ultralytics", "custom_multihead"]:
             hooked_cfg["dataset"] = hooked_data_config_file
         elif hooked_cfg["framework"] == "rfdetr":
-            hooked_cfg["dataset"] = self.dataset_dir
+            hooked_cfg["dataset"] = os.path.abspath(self.dataset_dir)
         else:
             raise Exception("[ERROR]: Unsupported framework: {}".format(hooked_cfg["framework"]))
 
         return hooked_cfg
 
     def dump_runtime_config(self, cfg, file_name="VS_train_cfgs.yaml"):
-        dump_path = os.path.join(self.work_dir, file_name)
+        dump_path = os.path.abspath(os.path.join(self.work_dir, file_name))
         self.dump_config(dump_path, cfg)
         return dump_path
 

@@ -23,9 +23,18 @@ def main(cmd, config_path):
         cfg = cfg_manager.build_hooked_train_config()
         cfg_manager.dump_runtime_config(cfg)
 
-        run_train(cfg)
+        keep_linked_dataset = bool(cfg.get("keep_linked_dataset", False))
 
-        bulk_unlink(cfg_manager.dataset_dir)
+        try:
+            run_train(cfg)
+        except Exception:
+            print("[WARN]: Training failed. Keeping linked dataset for debugging: {}".format(cfg_manager.dataset_dir))
+            raise
+        else:
+            if keep_linked_dataset:
+                print("[INFO]: keep_linked_dataset=True, skipping unlink: {}".format(cfg_manager.dataset_dir))
+            else:
+                bulk_unlink(cfg_manager.dataset_dir)
 
     elif cmd == "visualize":
         from vs_cli.visualize import run_visualize
