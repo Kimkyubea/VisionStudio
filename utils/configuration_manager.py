@@ -53,6 +53,14 @@ class VisionConfigManager:
     def dataset_dir(self):
         return os.path.abspath(os.path.join(self.work_dir, "dataset"))
 
+    @property
+    def artifact_dir_name(self):
+        return self.cfg.get("artifact_dir_name", "train_artifacts")
+
+    @property
+    def artifact_dir(self):
+        return os.path.abspath(os.path.join(self.work_dir, self.artifact_dir_name))
+
     def get_runtime_config(self):
         return copy.deepcopy(self.cfg)
 

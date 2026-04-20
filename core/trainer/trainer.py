@@ -14,9 +14,11 @@ class UltralyticsDetectionTrainer():
         self.model = YOLO(self.config["model"])
 
     def train(self):
-        prj_dir = self.config.get("project_dir", "runs")
-        prj_name = self.config.get("project_name", "train_detection")
-        prj_pull = os.path.join(prj_dir, prj_name)
+        run_root = os.path.join(
+            self.config.get("project_dir", "runs"),
+            self.config.get("project_name", "train_detection"),
+        )
+        artifact_name = self.config.get("artifact_dir_name", "train_artifacts")
 
         train_args = {
             "data"   : self.config["dataset"],
@@ -27,8 +29,8 @@ class UltralyticsDetectionTrainer():
             "workers": self.config.get("workers", 4),
             "cache"  : self.config.get("cache", False),
             "freeze" : self.config.get("freeze", 0),
-
-            "save_dir": prj_pull
+            "project": run_root,
+            "name"   : artifact_name,
         }
 
         extra_args = self.config.get("extra_args", {})
@@ -48,9 +50,11 @@ class UltralyticsClassificationTrainer():
         self.model = YOLO(self.config["model"])
 
     def train(self):
-        # prj_dir = self.config.get("project_dir", "runs")
-        # prj_name = self.config.get("project_name", "train_classification")
-        # prj_pull = os.path.join(prj_dir, prj_name)
+        run_root = os.path.join(
+            self.config.get("project_dir", "runs"),
+            self.config.get("project_name", "train_classification"),
+        )
+        artifact_name = self.config.get("artifact_dir_name", "train_artifacts")
 
         train_args = {
             "data"   : self.config["dataset"],
@@ -61,10 +65,8 @@ class UltralyticsClassificationTrainer():
             "workers": self.config.get("workers", 4),
             "cache"  : self.config.get("cache", False),
 
-            "project": self.config.get("project_dir", "runs"),
-            "name"   : self.config.get("project_name", "train_classification")
-
-            # "save_dir": prj_pull
+            "project": run_root,
+            "name"   : artifact_name
         }
         extra_args = self.config.get("extra_args", {})
 
