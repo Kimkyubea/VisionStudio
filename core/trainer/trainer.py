@@ -29,8 +29,9 @@ class UltralyticsDetectionTrainer():
             "workers": self.config.get("workers", 4),
             "cache"  : self.config.get("cache", False),
             "freeze" : self.config.get("freeze", 0),
-            "project": run_root,
-            "name"   : artifact_name,
+            # "project": run_root,
+            # "name"   : artifact_name,
+            "save_dir" : os.path.join(run_root, artifact_name)
         }
 
         extra_args = self.config.get("extra_args", {})
