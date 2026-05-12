@@ -3,6 +3,8 @@
 import os
 import cv2
 import yaml
+import torch
+import random
 import numpy as np
 
 from ultralytics import YOLO, settings
@@ -29,6 +31,7 @@ class UltralyticsDetectionTrainer():
             "workers": self.config.get("workers", 4),
             "cache"  : self.config.get("cache", False),
             "freeze" : self.config.get("freeze", 0),
+            "seed"   : self.config.get("seed", 0),
             # "project": run_root,
             # "name"   : artifact_name,
             "save_dir" : os.path.join(run_root, artifact_name)
@@ -65,6 +68,7 @@ class UltralyticsClassificationTrainer():
             "device" : self.config.get("device", 0),
             "workers": self.config.get("workers", 4),
             "cache"  : self.config.get("cache", False),
+            "seed"   : self.config.get("seed", 0),
 
             "project": run_root,
             "name"   : artifact_name
@@ -174,6 +178,12 @@ class RFDETRTrainer():
 
         cv2.imread = _safe_imread
 
+        seed = self.config.get("seed", 0)
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+
         try:
             self.model.train(**train_args)
         finally: cv2.imread = _original_imread
@@ -206,7 +216,7 @@ class MultiHeadClassificationTrainer:
 
         print("[INFO]: Custom multi-head classification training DONE")
         print("[INFO]: save_dir  = {}".format(result['save_dir']))
-        print("[INFO]: best_path = {}".format(result['bast_path']))
+        print("[INFO]: best_path = {}".format(result['best_path']))
         print("[INFO]: last_path = {}".format(result['last_path']))
 
 

@@ -62,6 +62,7 @@ def run_visualize(cfg):
 
     src_path = cfg["src_path"]
     shuffle = cfg.get("shuffle", False)
+    key_wait = cfg.get("key_wait", 1)
     window_name = "VS Visualization"
 
     def _is_stream_source(path):
@@ -75,6 +76,7 @@ def run_visualize(cfg):
     def _show_frame(image, wait_ms):
         results = predictor.predict(image)
         vis = visualizer.draw(image, results)
+        vis = cv2.resize(vis, (1920,1080))
         cv2.imshow(window_name, vis)
         return cv2.waitKey(wait_ms) & 0xFF
 
@@ -87,7 +89,7 @@ def run_visualize(cfg):
             image = imread_unicode(img_path)
             if image is None: continue
 
-            if _show_frame(image, 0) == ord("q"): break
+            if _show_frame(image, key_wait) == ord("q"): break
 
     elif _is_video_file(src_path) or _is_stream_source(src_path):
         cap = cv2.VideoCapture(src_path)
@@ -99,7 +101,7 @@ def run_visualize(cfg):
                 ret, frame = cap.read()
                 if not ret or frame is None: break
 
-                if _show_frame(frame, 1) == ord("q"): break
+                if _show_frame(frame, key_wait) == ord("q"): break
         finally:
             cap.release()
     else:
